@@ -1,4 +1,5 @@
 import logging
+import ast
 
 from shared import htmlprint
 from django.contrib.auth.models import User
@@ -82,7 +83,19 @@ class Activity(LTIModel, Position):
         return reversed(res)
 
     def indexed_pl(self):
-        return [i.pl for i in sorted(self.plposition_set.all(), key=lambda i: i.position)]
+        if (self.activity_data['learning_path'] and self.activity_data['learning_index']):
+            lst = ast.literal_eval(self.activity_data['learning_path'])
+            sub_lst = lst[int(self.activity_data['learning_index'])]
+            return [item.pl for pos, item in enumerate(sorted(self.plposition_set.all(), key=lambda i: i.position)) if pos in sub_lst]
+        else:
+            return [i.pl for i in sorted(self.plposition_set.all(), key=lambda i: i.position)]  
+
+    # def visible_pl(self):
+    #     lst = ast.literal_eval(self.activity_data['learning_path'])
+    #     sub_lst = lst[int(self.activity_data['learning_index'])]
+    #     self.activity_data['learning_index'] = str((int(self.activity_data['learning_index']) + 1)%len(lst))
+    #     self.save()
+    #     return [item.pl for pos, item in enumerate(sorted(self.plposition_set.all(), key=lambda i: i.position)) if pos in sub_lst]
 
     def indexed_activities(self):
         return Activity.objects.filter(parent=self).order_by("position")

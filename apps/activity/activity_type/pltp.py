@@ -1,3 +1,5 @@
+import ast
+
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render, reverse
@@ -166,9 +168,11 @@ class Pltp(AbstractActivityType):
             
             if action:
                 # Remove get arguments from URL
+                print('Action redirect')
                 return redirect(reverse("activity:play", args=[activity.id]))
         
         if session.current_pl:
+            print(session.current_pl)
             last = Answer.last(session.current_pl, request.user)
             Answer.objects.create(
                 user=request.user,
@@ -231,7 +235,17 @@ class Pltp(AbstractActivityType):
             session.save()
         return redirect(reverse("activity:play", args=[activity.id]))
     
-    
+    def forward(self, activity, session):
+        index = str(
+            (int(activity.activity_data['learning_index']) + 1) % len(ast.literal_eval(activity.activity_data['learning_path']))
+        )
+        activity.activity_data['learning_index'] = index
+        activity.save()
+        print(session.current_pl)
+        session.current_pl = None
+        session.save()
+        return redirect(reverse("activity:play", args=[activity.id]))
+        
     def pop(self, activity, session):
         pass
     
@@ -265,9 +279,17 @@ class Pltp(AbstractActivityType):
         })
         return get_template("activity/activity_type/pltp/navigation.html").render(context, request)
     
+    def learning_path(self, activity, session, request):
+        if (activity.activity_data['learning_index'] and activity.activity_data['learning_path']):
+            return get_template("activity/activity_type/pltp/learning_path.html").render({
+                "activity": activity
+            }, request)
+        else:
+            return None
     
     def get_context(self, activity, session, request):
         return {
+            "learning_path": self.learning_path(activity, session, request),
             "navigation": self.navigation(activity, session, request),
             "exercise":   session.current_pl_template(request),
         }

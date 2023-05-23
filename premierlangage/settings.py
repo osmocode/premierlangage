@@ -311,7 +311,8 @@ USE_L10N = True
 USE_TZ = True
 
 # Sandbox url:
-SANDBOX = 'http://127.0.0.1:7000'
+#SANDBOX = 'http://127.0.0.1:7000'
+SANDBOX = 'https://pl-sandbox-preprod.u-pem.fr/'
 
 # Static files (CSS, JavaScript, Images)
 STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, 'static'))
